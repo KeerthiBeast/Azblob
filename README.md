@@ -11,8 +11,8 @@ Usage: <br />
 - Download songs the your blob storage the see the items show up in the front page
 
 How it works: <br />
-This application should be used with the [Azblob-API]() to utilize its full features. The songs can be 
-downloaded to your Azure blob using the Azblob-API. The songs in the blobs can then be accessed and downloaded using
+This application should be used with the [Azblob-API](https://github.com/KeerthiBeast/Azblob-API) to utilize its full features. 
+The songs can be downloaded to your Azure blob using the Azblob-API. The songs in the blobs can then be accessed and downloaded using
 Azure Storage REST API.
 
 My Motive: <br />
