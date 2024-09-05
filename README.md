@@ -1,4 +1,4 @@
-#Azblob
+# Azblob
 Application to download Spotify playlists and songs to Azure blob and download those songs to mobile.
 Uses [Spotdl](https://github.com/spotDL/spotify-downloader) library to download Playlists and songs 
 and upload them to Azure blob using [Azblob-API](https://github.com/KeerthiBeast/Azblob-API)
