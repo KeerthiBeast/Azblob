@@ -3,23 +3,14 @@ package com.example.azblob.utils
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.azblob.api.AzureRetrofitInstance
 import com.example.azblob.model.Blob
-import com.example.azblob.model.BlobModel
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -28,7 +19,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
-import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.Base64
 import java.util.Date
@@ -46,8 +36,8 @@ import javax.crypto.spec.SecretKeySpec
 @OptIn(FlowPreview::class)
 class BlobViewModel(): ViewModel() {
 
-    private val _blobs = mutableStateListOf<Blob>() //Saving from the api
-    private val _searchBlobs = MutableStateFlow(_blobs) //Saving the list from api
+    private val _blobs = mutableListOf<Blob>() //Saving from the api
+    private val _searchBlobs = MutableStateFlow(mutableListOf<Blob>()) //Saving the list from api
 
     private val _searchText = MutableStateFlow("") //To search for songs
     val searchText = _searchText.asStateFlow()
@@ -118,7 +108,6 @@ class BlobViewModel(): ViewModel() {
                 Log.e("Exception", e.toString())
             }
         }
-
     }
 
     /*Search for songs using flow filters and update the blobList value

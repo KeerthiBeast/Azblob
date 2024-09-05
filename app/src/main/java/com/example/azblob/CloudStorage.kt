@@ -10,7 +10,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,17 +21,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -41,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -54,16 +48,19 @@ import com.example.azblob.model.Blob
 import com.example.azblob.utils.BlobViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.azblob.utils.syncFolder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -89,7 +86,16 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
         }
     }
 
-    val localFiles = syncFolder(activity)
+    var localFiles by remember {
+        mutableStateOf(listOf<String>())
+    }
+    LaunchedEffect(true) {
+        scope.launch {
+            val listFiles = syncFolder(activity)
+            localFiles = listFiles!!
+        }
+    }
+    //val blobRender = isPresent(blobs.value, localFiles)*/
     val downloader = DownloaderImp(activity)
 
     Box(
@@ -137,7 +143,7 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                         .fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(blobs.value) {
+                    items(blobs.value) { it->
                         BlobItem(it, localFiles, downloader)
                     }
                 }
@@ -150,6 +156,8 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                             pullToRefreshState.startRefresh()
                             delay(1000L)
                             viewModel.getSongs()
+                            val listFiles = syncFolder(activity)
+                            localFiles = listFiles!!
                             pullToRefreshState.endRefresh()
                         }
                     }
@@ -180,8 +188,8 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
 * Changes text color to green if song is present in the selected directory*/
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun BlobItem(blob: Blob, localFiles: List<String>?, downloader: DownloaderImp) {
-    val name = blob.name ?: "Unknown blob"
+fun BlobItem(blob: Blob, listFiles: List<String>?, downloader: DownloaderImp) {
+    val name = blob.name?: "Unknown blob"
     val fname = if(name != "Unknown Blob") {
         name.substring(0, name.length-4)
     } else {
@@ -191,16 +199,7 @@ fun BlobItem(blob: Blob, localFiles: List<String>?, downloader: DownloaderImp) {
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        if (localFiles?.contains(name) == true) {
-            Text(
-                text = fname,
-                modifier = Modifier
-                    .padding(16.dp),
-                color = Color.Green,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1
-            )
-        } else {
+        if(listFiles?.contains(name) != true) {
             Text(
                 text = fname,
                 modifier = Modifier
@@ -210,11 +209,21 @@ fun BlobItem(blob: Blob, localFiles: List<String>?, downloader: DownloaderImp) {
                 maxLines = 1
             )
             IconButton(onClick = { downloader.downloadFile(blob.url!!, name) }) {
-               Icon(
-                   painter = painterResource(R.drawable.cloud_download),
-                   contentDescription = null
-               )
+                Icon(
+                    painter = painterResource(R.drawable.cloud_download),
+                    contentDescription = null
+                )
             }
+        } else {
+            Text(
+                text = fname,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp),
+                color = Color.Green,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
         }
     }
 }
