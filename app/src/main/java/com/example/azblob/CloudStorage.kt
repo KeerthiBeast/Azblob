@@ -136,7 +136,7 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                     LaunchedEffect(true) {
                         scope.launch {
                             pullToRefreshState.startRefresh()
-                            delay(2000L)
+                            delay(1000)
                             viewModel.getSongs()
                             pullToRefreshState.endRefresh()
                         }
