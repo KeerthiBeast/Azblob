@@ -144,10 +144,8 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                     LaunchedEffect(true) {
                         scope.launch {
                             pullToRefreshState.startRefresh()
-                            delay(1000L)
+                            delay(2500L)
                             viewModel.getSongs()
-                            //val listFiles = syncFolder(activity)
-                            //localFiles = listFiles!!
                             pullToRefreshState.endRefresh()
                         }
                     }
