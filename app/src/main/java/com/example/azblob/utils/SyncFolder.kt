@@ -10,14 +10,15 @@ import androidx.documentfile.provider.DocumentFile
 
 /*Reads the selected folder and returns a list of files in it*/
 
-fun syncFolder(context: Context): List<String>? {
+fun syncFolder(): List<String>? {
+    val context = Utils.context
     val _fileName = mutableListOf<String>()
     var fileName: List<String>? = null
 
     //Get folder URI
     val folderUriKey = "folder_uri_key"
-    val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-    val selectedFolderUri = sharedPreferences.getString(folderUriKey, null)?.let { Uri.parse(it) }
+    val sharedPreferences = context?.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    val selectedFolderUri = sharedPreferences?.getString(folderUriKey, null)?.let { Uri.parse(it) }
 
     //Search the folder
     if (selectedFolderUri != null) {

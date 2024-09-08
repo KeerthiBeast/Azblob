@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.azblob.model.BlobFinal
 import com.example.azblob.utils.syncFolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -85,17 +86,6 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
             lazyListState.firstVisibleItemIndex <= 1 && lazyListState.firstVisibleItemScrollOffset <= 1
         }
     }
-
-    var localFiles by remember {
-        mutableStateOf(listOf<String>())
-    }
-    LaunchedEffect(true) {
-        scope.launch {
-            val listFiles = syncFolder(activity)
-            localFiles = listFiles!!
-        }
-    }
-    //val blobRender = isPresent(blobs.value, localFiles)*/
     val downloader = DownloaderImp(activity)
 
     Box(
@@ -144,7 +134,7 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(blobs.value) { it->
-                        BlobItem(it, localFiles, downloader)
+                        BlobItem(it, downloader)
                     }
                 }
 
@@ -156,8 +146,8 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                             pullToRefreshState.startRefresh()
                             delay(1000L)
                             viewModel.getSongs()
-                            val listFiles = syncFolder(activity)
-                            localFiles = listFiles!!
+                            //val listFiles = syncFolder(activity)
+                            //localFiles = listFiles!!
                             pullToRefreshState.endRefresh()
                         }
                     }
@@ -188,7 +178,7 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
 * Changes text color to green if song is present in the selected directory*/
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun BlobItem(blob: Blob, listFiles: List<String>?, downloader: DownloaderImp) {
+fun BlobItem(blob: BlobFinal, downloader: DownloaderImp) {
     val name = blob.name?: "Unknown blob"
     val fname = if(name != "Unknown Blob") {
         name.substring(0, name.length-4)
@@ -199,7 +189,7 @@ fun BlobItem(blob: Blob, listFiles: List<String>?, downloader: DownloaderImp) {
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        if(listFiles?.contains(name) != true) {
+        /*if(listFiles?.contains(name) != true) {
             Text(
                 text = fname,
                 modifier = Modifier
@@ -224,6 +214,23 @@ fun BlobItem(blob: Blob, listFiles: List<String>?, downloader: DownloaderImp) {
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1
             )
+        }*/
+        Text(
+            text = fname,
+            modifier = Modifier
+                .weight(1f)
+                .padding(16.dp),
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+            color = blob.color
+        )
+        if(blob.color == Color.White) {
+            IconButton(onClick = { downloader.downloadFile(blob.url, name) }) {
+                Icon(
+                    painter = painterResource(R.drawable.cloud_download),
+                    contentDescription = null
+                )
+            }
         }
     }
 }

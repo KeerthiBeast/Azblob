@@ -40,15 +40,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.azblob.ui.theme.AzblobTheme
+import com.example.azblob.utils.Utils
 
 /*Has the scaffold view for the entire app
 * Has the bottom navigation bar and top app bar*/
 
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Utils.context = this
         enableEdgeToEdge()
         setContent {
             AzblobTheme {
@@ -61,7 +63,7 @@ class MainActivity : ComponentActivity() {
 }
 
 //Function for the Top and Bottom bar
-@RequiresApi(Build.VERSION_CODES.O)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBottom(navController: NavHostController, activity: ComponentActivity) {
