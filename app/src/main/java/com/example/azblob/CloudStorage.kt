@@ -54,6 +54,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.azblob.model.BlobFinal
+import com.example.azblob.utils.syncFolder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

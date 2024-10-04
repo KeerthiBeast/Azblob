@@ -23,11 +23,12 @@ fun syncFolder(): List<String>? {
     //Search the folder
     if (selectedFolderUri != null) {
         val documentFile = DocumentFile.fromTreeUri(context, selectedFolderUri)
-        if(documentFile != null && documentFile.canRead())
+        if(documentFile != null && documentFile.canRead()) {
             documentFile.listFiles().let { file ->
                 _fileName.addAll(file.map { it.name.toString() })
-                fileName = _fileName
             }
+            fileName = _fileName
+        }
     }
 
     return fileName
