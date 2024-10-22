@@ -42,6 +42,9 @@ import javax.crypto.spec.SecretKeySpec
 @OptIn(FlowPreview::class)
 class BlobViewModel(): ViewModel() {
 
+    private val _inProgress = MutableStateFlow(true)
+    val inProgress = _inProgress.asStateFlow()
+
     private val _blobs = mutableListOf<Blob>() //Saving from the api
     private val _searchBlobs = MutableStateFlow(mutableListOf<BlobFinal>()) //Saving the list from api
 
@@ -50,6 +53,11 @@ class BlobViewModel(): ViewModel() {
 
     private val _isSearching = MutableStateFlow(false) //To indicate searching state
     val isSearching = _isSearching.asStateFlow()
+
+    private val _toDownload = MutableStateFlow(mutableListOf<BlobFinal>())
+    val toDownload = _toDownload.asStateFlow()
+    private val _downloadSize = MutableStateFlow(0)
+    val downloadSize = _downloadSize.asStateFlow()
 
     init {
         getSongs()
@@ -104,6 +112,7 @@ class BlobViewModel(): ViewModel() {
                         _blobs.clear()
                         _blobs.addAll(it)
                         _searchBlobs.value = localFileList(_blobs)
+                        _inProgress.value = false
                     }
                 } else {
                     Log.e("Response", response.code().toString())
@@ -120,17 +129,23 @@ class BlobViewModel(): ViewModel() {
     fun localFileList(blobs: List<Blob>): MutableList<BlobFinal> {
         var fileList: List<String>?
         val blobFileList = mutableListOf<BlobFinal>()
+        val toDownloadList = mutableListOf<BlobFinal>()
         viewModelScope.launch() {
             fileList = syncFolder()
             blobs.forEach{it->
                 if(fileList?.contains(it.name) == true) {
                     it.name?.let { it1 -> it.url?.let { it2 -> BlobFinal(it1, it2, Color.Green) } }
                         ?.let { it2 -> blobFileList.add(it2) }
+
                 } else {
                     it.name?.let { it1 -> it.url?.let {it2 -> BlobFinal(it1, it2, Color.White)}}
                         ?.let { it2 -> blobFileList.add(it2)}
+                    it.name?.let { it1 -> it.url?.let { it2 -> BlobFinal(it1, it2, Color.White) } }
+                        ?.let { it2 -> toDownloadList.add(it2) }
                 }
             }
+            _toDownload.value = toDownloadList
+            _downloadSize.value = toDownloadList.size
         }
         return blobFileList
     }

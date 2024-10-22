@@ -14,6 +14,7 @@ import androidx.core.net.toUri
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.documentfile.provider.DocumentFile
+import com.example.azblob.model.BlobFinal
 import java.io.File
 
 /*Downloader to download songs using Android native Download manager
@@ -44,6 +45,32 @@ class DownloaderImp(
                 }
             }
         }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun downloadFileQueue(fileQueue: ArrayDeque<BlobFinal>) {
+        while(fileQueue.isNotEmpty()) {
+            val url = fileQueue.first().url
+            val name = fileQueue.first().name
+            val request = DownloadManager.Request(url.toUri())
+                .setMimeType("audio/mp3")
+                .setTitle(name)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
+            val result = downloadManager.enqueue(request)
+
+            //Receives a broadcast when the download is complete to move files
+            context.registerReceiver(object : BroadcastReceiver() {
+                override fun onReceive(ctx: Context, intent: Intent) {
+                    val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                    if (id == result) {
+                        // Move the file to the custom directory after the download completes
+                        moveFileToAzblobFolder(result, name)
+                        context.unregisterReceiver(this) // Unregister receiver after the download is complete
+                    }
+                }
+            }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED)
+            fileQueue.removeFirst()
+        }
     }
 
     @SuppressLint("Range")

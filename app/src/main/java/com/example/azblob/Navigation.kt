@@ -30,6 +30,7 @@ object NavName {
     const val home = "Blob"
     const val sync = "Sync"
     const val about = "Settings"
+    const val download = "Download"
 }
 
 //Main navigation function
@@ -45,6 +46,9 @@ fun Navigation(activity: ComponentActivity, navController: NavHostController, st
         }
         composable(NavName.about) {
             FolderPickerScreen(paddingValues = paddingValues, context = activity)
+        }
+        composable(NavName.download) {
+            ToDownload(paddingValues = paddingValues, activity = activity)
         }
     }
 }

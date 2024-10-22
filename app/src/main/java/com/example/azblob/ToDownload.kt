@@ -2,6 +2,7 @@ package com.example.azblob
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import com.example.azblob.utils.BlobViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -58,27 +60,19 @@ import com.example.azblob.utils.syncFolder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/* Display songs present in the blob storage
-* Uses viewModel to fetch the data from the api*/
+/*Download remaining songs no in the Folder
+Almost everything is same as CloudStorage.kt*/
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingValues, activity: ComponentActivity) {
-    //StartUp Loading Animation
-    val inProgress by viewModel.inProgress.collectAsState()
-    if(inProgress) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-    }
-
-    val blobs = viewModel.blobList.collectAsState()
+fun ToDownload(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingValues, activity: ComponentActivity) {
+    val blobs = viewModel.toDownload.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
+    val downloadSize by viewModel.downloadSize.collectAsState()
+    val blobList by viewModel.toDownload.collectAsState()
 
     val scope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
@@ -122,6 +116,11 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                     }
                 )
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("$downloadSize Songs to Download")
+            Spacer(modifier = Modifier.height(20.dp))
+
             if (isSearching) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     CircularProgressIndicator(
@@ -137,7 +136,7 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(blobs.value) { it->
-                        BlobItem(it, downloader)
+                        BlobItemDownload(it, downloader)
                     }
                 }
 
@@ -155,12 +154,13 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
                 }
             }
         }
+        DownloadAll(activity, downloader, blobList)
         AnimatedVisibility(
             visible = !searchBarVisibility,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            GoToTop() {
+            GoToTopDownload() {
                 scope.launch {
                     lazyListState.scrollToItem(0)
                 }
@@ -179,7 +179,7 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
 * Changes text color to green if song is present in the selected directory*/
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun BlobItem(blob: BlobFinal, downloader: DownloaderImp) {
+fun BlobItemDownload(blob: BlobFinal, downloader: DownloaderImp) {
     val name = blob.name
     val fname = if(name != "Unknown Blob") {
         name.substring(0, name.length-4)
@@ -212,7 +212,7 @@ fun BlobItem(blob: BlobFinal, downloader: DownloaderImp) {
 
 //Button to Go to top
 @Composable
-fun GoToTop(goToTop: () -> Unit) {
+fun GoToTopDownload(goToTop: () -> Unit) {
     Box(modifier = Modifier
         .fillMaxSize()
     ) {
@@ -226,6 +226,37 @@ fun GoToTop(goToTop: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowUp,
                 contentDescription = "go to top"
+            )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun DownloadAll(activity: ComponentActivity, downloader: DownloaderImp, toDownload: MutableList<BlobFinal>) {
+    val downloadQueue = ArrayDeque(toDownload)
+    Box(modifier = Modifier
+        .fillMaxSize()
+    ) {
+        FloatingActionButton(
+            modifier = Modifier
+                .padding(16.dp)
+                .size(50.dp)
+                .align(Alignment.BottomCenter),
+            onClick = {
+               activity.runOnUiThread {
+                   Toast.makeText(
+                       activity,
+                       "Download Started",
+                       Toast.LENGTH_SHORT
+                   ).show()
+               }
+                downloader.downloadFileQueue(downloadQueue)
+            }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.download_all),
+                contentDescription = null
             )
         }
     }
