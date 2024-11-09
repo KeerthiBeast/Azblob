@@ -95,24 +95,24 @@ fun TopBottom(navController: NavHostController, activity: ComponentActivity) {
                     Text(title)
                 },
                 actions = {
-                        IconButton(onClick = {
-                            title = "To Download"
-                            navController.navigate(NavName.download) {
-                                if(currentDestination != null) {
-                                    popUpTo(currentDestination.id) {
-                                        saveState = true
-                                        inclusive = true
-                                    }
-                                } else {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                        inclusive = true
-                                    }
+                    IconButton(onClick = {
+                        title = "To Download"
+                        navController.navigate(NavName.download) {
+                            if(currentDestination != null) {
+                                popUpTo(currentDestination.id) {
+                                    saveState = true
+                                    inclusive = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                            } else {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                    inclusive = true
+                                }
                             }
-                        }) {
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.download_all),
                             contentDescription = null
