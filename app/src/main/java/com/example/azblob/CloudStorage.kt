@@ -96,61 +96,50 @@ fun CloudStorage(viewModel: BlobViewModel = viewModel(), paddingValues: PaddingV
             .nestedScroll(pullToRefreshState.nestedScrollConnection)
             .padding(paddingValues)
     ) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(20.dp))
-            //Search bar disappear animation
-            AnimatedVisibility(
-                visible = searchBarVisibility,
-                enter = fadeIn() + slideInVertically(initialOffsetY = {-it}),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = {-it}),
-            ) {
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = viewModel::onSearchTextChange,
-                    modifier = Modifier
-                        .widthIn(310.dp),
-                    placeholder = { Text(text = "Search") },
-                    shape = MaterialTheme.shapes.extraLarge,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null
-                        )
-                    }
+        if (isSearching) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
                 )
             }
-            if (isSearching) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+        } else {
+            LazyColumn(
+                state = lazyListState,
+                contentPadding = PaddingValues(8.dp),
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item{
+                    OutlinedTextField(
+                        value = searchText,
+                        onValueChange = viewModel::onSearchTextChange,
+                        modifier = Modifier
+                            .widthIn(310.dp),
+                        placeholder = { Text(text = "Search") },
+                        shape = MaterialTheme.shapes.extraLarge,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null
+                            )
+                        }
                     )
                 }
-            } else {
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = PaddingValues(8.dp),
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(blobs.value) { it->
-                        BlobItem(it, downloader)
-                    }
+                items(blobs.value) { it->
+                    BlobItem(it, downloader)
                 }
+            }
 
-
-                //Pull refresh actions
-                if (pullToRefreshState.isRefreshing) {
-                    LaunchedEffect(true) {
-                        scope.launch {
-                            pullToRefreshState.startRefresh()
-                            delay(1000)
-                            viewModel.getSongs()
-                            pullToRefreshState.endRefresh()
-                        }
+            //Pull refresh actions
+            if (pullToRefreshState.isRefreshing) {
+                LaunchedEffect(true) {
+                    scope.launch {
+                        pullToRefreshState.startRefresh()
+                        delay(1000)
+                        viewModel.getSongs()
+                        pullToRefreshState.endRefresh()
                     }
                 }
             }

@@ -10,10 +10,8 @@ import androidx.documentfile.provider.DocumentFile
 
 /*Reads the selected folder and returns a list of files in it*/
 
-fun syncFolder(): List<String>? {
-    val context = Utils.context
-    val _fileName = mutableListOf<String>()
-    var fileName: List<String>? = null
+suspend fun syncFolder(): Set<String> {
+    val context = Utils.context ?: return emptySet()
 
     //Get folder URI
     val folderUriKey = "folder_uri_key"
@@ -24,12 +22,9 @@ fun syncFolder(): List<String>? {
     if (selectedFolderUri != null) {
         val documentFile = DocumentFile.fromTreeUri(context, selectedFolderUri)
         if(documentFile != null && documentFile.canRead()) {
-            documentFile.listFiles().let { file ->
-                _fileName.addAll(file.map { it.name.toString() })
-            }
-            fileName = _fileName
+            return documentFile.listFiles().mapNotNull { it.name }.toSet()
         }
     }
 
-    return fileName
+    return emptySet()
 }

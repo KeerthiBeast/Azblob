@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import com.example.azblob.utils.BlobViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -56,7 +55,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.azblob.model.BlobFinal
-import com.example.azblob.utils.syncFolder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -233,7 +231,7 @@ fun GoToTopDownload(goToTop: () -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun DownloadAll(activity: ComponentActivity, downloader: DownloaderImp, toDownload: MutableList<BlobFinal>) {
+fun DownloadAll(activity: ComponentActivity, downloader: DownloaderImp, toDownload: List<BlobFinal>) {
     val downloadQueue = ArrayDeque(toDownload)
     Box(modifier = Modifier
         .fillMaxSize()

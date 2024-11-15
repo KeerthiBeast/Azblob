@@ -95,7 +95,7 @@ fun TopBottom(navController: NavHostController, activity: ComponentActivity) {
                     Text(title)
                 },
                 actions = {
-                    IconButton(onClick = {
+                IconButton(onClick = {
                         title = "To Download"
                         navController.navigate(NavName.download) {
                             if(currentDestination != null) {

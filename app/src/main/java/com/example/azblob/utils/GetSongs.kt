@@ -46,7 +46,7 @@ class BlobViewModel(): ViewModel() {
     val inProgress = _inProgress.asStateFlow()
 
     private val _blobs = mutableListOf<Blob>() //Saving from the api
-    private val _searchBlobs = MutableStateFlow(mutableListOf<BlobFinal>()) //Saving the list from api
+    private val _searchBlobs = MutableStateFlow<List<BlobFinal>>(emptyList()) //Saving the list from api
 
     private val _searchText = MutableStateFlow("") //To search for songs
     val searchText = _searchText.asStateFlow()
@@ -54,7 +54,7 @@ class BlobViewModel(): ViewModel() {
     private val _isSearching = MutableStateFlow(false) //To indicate searching state
     val isSearching = _isSearching.asStateFlow()
 
-    private val _toDownload = MutableStateFlow(mutableListOf<BlobFinal>())
+    private val _toDownload = MutableStateFlow<List<BlobFinal>>(emptyList())
     val toDownload = _toDownload.asStateFlow()
     private val _downloadSize = MutableStateFlow(0)
     val downloadSize = _downloadSize.asStateFlow()
@@ -126,28 +126,20 @@ class BlobViewModel(): ViewModel() {
     }
 
     //Mark files if they are present in the local folder with Green or leave it as White
-    fun localFileList(blobs: List<Blob>): MutableList<BlobFinal> {
-        var fileList: List<String>?
-        val blobFileList = mutableListOf<BlobFinal>()
-        val toDownloadList = mutableListOf<BlobFinal>()
-        viewModelScope.launch() {
-            fileList = syncFolder()
-            blobs.forEach{it->
-                if(fileList?.contains(it.name) == true) {
-                    it.name?.let { it1 -> it.url?.let { it2 -> BlobFinal(it1, it2, Color.Green) } }
-                        ?.let { it2 -> blobFileList.add(it2) }
+    private suspend fun localFileList(blobs: List<Blob>): List<BlobFinal> {
+        val fileList: Set<String> = syncFolder()
 
-                } else {
-                    it.name?.let { it1 -> it.url?.let {it2 -> BlobFinal(it1, it2, Color.White)}}
-                        ?.let { it2 -> blobFileList.add(it2)}
-                    it.name?.let { it1 -> it.url?.let { it2 -> BlobFinal(it1, it2, Color.White) } }
-                        ?.let { it2 -> toDownloadList.add(it2) }
-                }
-            }
-            _toDownload.value = toDownloadList
-            _downloadSize.value = toDownloadList.size
+        return blobs.map{blob->
+            val color = if(fileList.contains(blob.name)) Color.Green else Color.White
+            BlobFinal(
+                name = blob.name ?: "",
+                url = blob.url ?: "",
+                color = color
+            )
+        }.also {notPresent->
+            _toDownload.value = notPresent.filter { it.color == Color.White }
+            _downloadSize.value = _toDownload.value.size
         }
-        return blobFileList
     }
 
     /*Search for songs using flow filters and update the blobList value
