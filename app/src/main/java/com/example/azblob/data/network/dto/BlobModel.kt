@@ -1,4 +1,4 @@
-package com.example.azblob.model
+package com.example.azblob.data.network.dto
 import org.simpleframework.xml.Element
 import org.simpleframework.xml.ElementList
 import org.simpleframework.xml.Root
@@ -32,4 +32,3 @@ class Blob @JvmOverloads constructor(
     @field:Element(name = "Url", required = true)
     var url: String? = null,
 )
-

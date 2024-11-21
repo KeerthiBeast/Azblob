@@ -11,6 +11,7 @@
 
     <application
         android:allowBackup="true"
+        android:name=".Azblob"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/azicon"
@@ -31,7 +32,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <receiver android:name=".DownloaderImp" android:enabled="true"/>
+        <receiver android:name=".data.download.DownloaderImp" android:enabled="true"/>
     </application>
 
 </manifest>

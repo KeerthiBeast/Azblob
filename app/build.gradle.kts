@@ -1,6 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.hilt.android)
+    id("com.google.devtools.ksp") version "2.0.21-1.0.25"
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -50,6 +54,10 @@ android {
     }
 }
 
+hilt {
+    enableAggregatingTask = false
+}
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -82,13 +90,20 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.okhttp)
-
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.retrofit)
     implementation(libs.converter.simplexml)
     implementation(libs.logging.interceptor)
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation("androidx.compose.material:material")
+    implementation(libs.androidx.material)
 
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    ksp(libs.androidx.hilt.compiler)
+
+    implementation(libs.javapoet)
 }

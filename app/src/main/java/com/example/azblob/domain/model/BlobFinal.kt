@@ -1,4 +1,4 @@
-package com.example.azblob.model
+package com.example.azblob.domain.model
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,6 +1,6 @@
-package com.example.azblob.api
+package com.example.azblob.data.network
 
-import com.example.azblob.model.LogModel
+import com.example.azblob.data.network.dto.LogModel
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -8,7 +8,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 //Different Endpoints of the API
-interface ApiInterface {
+interface AzblobApi {
     @POST("/song")
     suspend fun putSong(
         @Body requestBody: RequestBody

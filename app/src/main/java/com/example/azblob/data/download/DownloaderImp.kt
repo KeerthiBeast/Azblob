@@ -1,4 +1,4 @@
-package com.example.azblob
+package com.example.azblob.data.download
 
 import android.annotation.SuppressLint
 import android.app.DownloadManager
@@ -7,27 +7,29 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.database.Cursor
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import androidx.core.net.toUri
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.documentfile.provider.DocumentFile
-import com.example.azblob.model.BlobFinal
+import com.example.azblob.domain.download.Downloader
+import com.example.azblob.domain.model.BlobFinal
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import javax.inject.Inject
 
 /*Downloader to download songs using Android native Download manager
 * Downloads songs to the default download folder and then moves it to the selected folder
 selected by the user saved in the sharedPreferences*/
 
-class DownloaderImp(
-    private val context: Context
-) {
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+class DownloaderImp @Inject constructor(
+    @ApplicationContext private val context: Context
+): Downloader {
     private val downloadManager =  context.getSystemService(DownloadManager::class.java)
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun downloadFile(url: String, name: String) {
+    override fun downloadFile(url: String, name: String) {
         val request = DownloadManager.Request(url.toUri())
             .setMimeType("audio/mp3")
             .setTitle(name)
@@ -44,33 +46,49 @@ class DownloaderImp(
                     context.unregisterReceiver(this) // Unregister receiver after the download is complete
                 }
             }
-        }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED)
+        }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+            Context.RECEIVER_EXPORTED)
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun downloadFileQueue(fileQueue: ArrayDeque<BlobFinal>) {
-        while(fileQueue.isNotEmpty()) {
-            val url = fileQueue.first().url
-            val name = fileQueue.first().name
-            val request = DownloadManager.Request(url.toUri())
-                .setMimeType("audio/mp3")
-                .setTitle(name)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
-            val result = downloadManager.enqueue(request)
+    override fun downloadFileQueue(fileQueue: ArrayDeque<BlobFinal>) {
+        if (fileQueue.isEmpty()) return
 
-            //Receives a broadcast when the download is complete to move files
-            context.registerReceiver(object : BroadcastReceiver() {
-                override fun onReceive(ctx: Context, intent: Intent) {
-                    val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                    if (id == result) {
-                        // Move the file to the custom directory after the download completes
-                        moveFileToAzblobFolder(result, name)
-                        context.unregisterReceiver(this) // Unregister receiver after the download is complete
+        val downloadNext = object {
+            fun startDownload() {
+                if (fileQueue.isEmpty()) return
+
+                val file = fileQueue.removeFirst()
+                val url = file.url
+                val name = file.name
+
+                val request = DownloadManager.Request(url.toUri())
+                    .setMimeType("audio/mp3")
+                    .setTitle(name)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
+
+                val result = downloadManager.enqueue(request)
+
+                // Register a broadcast receiver to handle download completion
+                context.registerReceiver(object : BroadcastReceiver() {
+                    override fun onReceive(ctx: Context, intent: Intent) {
+                        val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                        if (id == result) {
+                            // Move the file to the custom directory after the download completes
+                            moveFileToAzblobFolder(result, name)
+
+                            // Unregister receiver to avoid memory leaks
+                            context.unregisterReceiver(this)
+
+                            // Start the next download in the queue
+                            startDownload()
+                        }
                     }
-                }
-            }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED)
-            fileQueue.removeFirst()
+                }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+                    Context.RECEIVER_EXPORTED)
+            }
         }
+
+        downloadNext.startDownload()
     }
 
     @SuppressLint("Range")

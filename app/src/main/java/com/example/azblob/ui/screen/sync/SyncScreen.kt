@@ -1,5 +1,6 @@
-package com.example.azblob
+package com.example.azblob.ui.screen.sync
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.widget.Toast
@@ -8,7 +9,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,50 +33,62 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.azblob.utils.Utils
-import com.example.azblob.utils.apiStatus
-import com.example.azblob.utils.postPlaylist
-import com.example.azblob.utils.postSong
-import com.example.azblob.utils.syncFolder
+import androidx.hilt.navigation.compose.hiltViewModel
 
 /* Initiate API functions to download and upload songs to Azure blob service */
 
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
-fun SyncDownload(activity: ComponentActivity, paddingValues: PaddingValues) {
-    Column(
-        modifier = Modifier
-            .padding(paddingValues)
-            .fillMaxSize()
-            .padding(25.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Songs(activity)
-        Spacer(modifier = Modifier.size(35.dp))
-        Sync(activity)
-        Spacer(modifier = Modifier.size(35.dp))
-        Playlist(activity)
-        Spacer(modifier = Modifier.size(35.dp))
-        SyncPlaylist(activity)
+fun SyncScreen(
+    viewModel: SyncViewModel = hiltViewModel(),
+    activity: ComponentActivity,
+    paddingValues: PaddingValues
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = {
+                    Text("Sync Screen")
+                },
+            )
+        }
+    ) {innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(25.dp)
+                .padding(bottom = paddingValues.calculateBottomPadding()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Songs(viewModel)
+            Spacer(modifier = Modifier.size(35.dp))
+            Sync(viewModel)
+            Spacer(modifier = Modifier.size(35.dp))
+            Playlist(viewModel)
+            Spacer(modifier = Modifier.size(35.dp))
+            SyncPlaylist(activity, viewModel)
+        }
     }
 }
 
 //Test server status
 @Composable
-fun Sync(activity: ComponentActivity) {
-    Button(onClick = { apiStatus() {
-            message -> activity.runOnUiThread {
-        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
-    }
-    }
-    }) {
-        Text("Check Status")
+fun Sync(viewModel: SyncViewModel) {
+    Button(onClick = { viewModel.getStatus() }) {
+       Text("Check Status")
     }
 }
 
 //Download individual songs
 @Composable
-fun Songs(activity: ComponentActivity) {
+fun Songs(viewModel: SyncViewModel) {
     var link by remember { mutableStateOf("") }
     var isEnabled by remember { mutableStateOf(false) }
 
@@ -103,17 +115,9 @@ fun Songs(activity: ComponentActivity) {
     Button(
         enabled = isEnabled,
         onClick = {
-            postSong(link) { message ->
-                activity.runOnUiThread {
-                    Toast.makeText(
-                        activity,
-                        message,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                link = ""
-                isEnabled = false
-            }
+            viewModel.putSong(link)
+            link = ""
+            isEnabled = false
         }) {
         Text("Download Song")
     }
@@ -121,7 +125,7 @@ fun Songs(activity: ComponentActivity) {
 
 //Download playlists
 @Composable
-fun Playlist(activity: ComponentActivity) {
+fun Playlist(viewModel: SyncViewModel) {
     var link by remember { mutableStateOf("") }
     var isEnabled by remember { mutableStateOf(false) }
 
@@ -148,17 +152,9 @@ fun Playlist(activity: ComponentActivity) {
     Button(
         enabled = isEnabled,
         onClick = {
-            postPlaylist(link) { message ->
-                activity.runOnUiThread {
-                    Toast.makeText(
-                        activity,
-                        message,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                link = ""
-                isEnabled = false
-            }
+            viewModel.putPlaylist(link)
+            link = ""
+            isEnabled = false
         }) {
         Text("Sync Playlist")
     }
@@ -166,7 +162,7 @@ fun Playlist(activity: ComponentActivity) {
 
 //Sync with the default playlist set by the user
 @Composable
-fun SyncPlaylist(activity: ComponentActivity) {
+fun SyncPlaylist(activity: ComponentActivity, viewModel: SyncViewModel) {
     //Retrieve playlist url from sharedPreferences
     val sharedPreferences = activity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     val playlist: String? = sharedPreferences.getString("default_playlist", null)
@@ -177,11 +173,7 @@ fun SyncPlaylist(activity: ComponentActivity) {
                 Toast.makeText(activity, "No playlist Selected", Toast.LENGTH_LONG).show()
             }
         } else {
-            postPlaylist(playlist) { message ->
-               activity.runOnUiThread {
-                   Toast.makeText(activity, message, Toast.LENGTH_LONG).show()
-               }
-            }
+            viewModel.putPlaylist(playlist)
         }
     }) {
         Text("Sync Default Playlist")
