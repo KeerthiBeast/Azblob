@@ -17,7 +17,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.azblob.ui.screen.settings.SettingsScreen
 import com.example.azblob.ui.screen.songs.SongsScreen
-import com.example.azblob.ui.screen.songs.ToDownloadScreen
 import com.example.azblob.ui.screen.sync.SyncScreen
 
 /*Manages navigation of the application using NavHostController
@@ -28,7 +27,6 @@ object NavName {
     const val home = "Blob"
     const val sync = "Sync"
     const val about = "Settings"
-    const val download = "Download"
 }
 
 //Main navigation function
@@ -42,14 +40,11 @@ fun Navigation(activity: ComponentActivity, navController: NavHostController, st
         composable(NavName.home) {
             SongsScreen(
                 paddingValues = paddingValues,
-                toDownloads = { navController.navigate(NavName.download) }
+                activity = activity,
             )
         }
         composable(NavName.about) {
             SettingsScreen(paddingValues = paddingValues, context = activity)
-        }
-        composable(NavName.download) {
-            ToDownloadScreen(paddingValues = paddingValues, activity = activity)
         }
     }
 }

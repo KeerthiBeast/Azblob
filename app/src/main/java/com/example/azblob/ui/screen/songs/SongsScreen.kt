@@ -2,6 +2,8 @@ package com.example.azblob.ui.screen.songs
 
 import android.annotation.SuppressLint
 import android.os.Build
+import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -39,8 +41,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,13 +65,17 @@ import kotlinx.coroutines.launch
 fun SongsScreen(
     viewModel: SongsViewModel = hiltViewModel(),
     paddingValues: PaddingValues,
-    toDownloads: ()-> Unit
+    activity: ComponentActivity,
 ) {
     //StartUp Loading Animation
     val blobs by viewModel.blobList.collectAsState()
+    val toDownload by viewModel.downloadList.collectAsState()
+    val downloadSize by viewModel.downloadSize.collectAsState()
 
     val searchText by viewModel.searchText.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
+
+    var changeScreen by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
@@ -87,10 +95,14 @@ fun SongsScreen(
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text("Songs")
+                    if(changeScreen)Text("To Download")
+                    else Text("Songs")
                 },
                 actions = {
-                    IconButton(onClick = { toDownloads() }) {
+                    IconButton(onClick = {
+                        if(changeScreen) changeScreen = false
+                        else changeScreen = true
+                    }) {
                         Icon(
                             painter = painterResource(id = R.drawable.download_all),
                             contentDescription = null
@@ -137,8 +149,21 @@ fun SongsScreen(
                             }
                         )
                     }
-                    items(blobs) { it ->
-                        BlobItem(it, viewModel)
+
+                    if(changeScreen) {
+                        item {
+                            Text("$downloadSize Songs to Download")
+                        }
+
+                        items(toDownload) { it ->
+                            BlobItem(it, viewModel)
+                        }
+                    }
+
+                    else {
+                        items(blobs) { it ->
+                            BlobItem(it, viewModel)
+                        }
                     }
                 }
 
@@ -154,16 +179,23 @@ fun SongsScreen(
                     }
                 }
             }
+
+            if(changeScreen && downloadSize>0) {
+                DownloadAllSongs(activity, toDownload, paddingValues, viewModel)
+            }
             AnimatedVisibility(
                 visible = !searchBarVisibility,
                 enter = fadeIn(),
                 exit = fadeOut()
             ) {
-                GoToTop() {
-                    scope.launch {
-                        lazyListState.scrollToItem(0)
+                GoToTop(
+                    paddingValues = paddingValues,
+                    goToTop = {
+                        scope.launch {
+                            lazyListState.scrollToItem(0)
+                        }
                     }
-                }
+                )
             }
             PullToRefreshContainer(
                 state = pullToRefreshState,
@@ -210,9 +242,13 @@ fun BlobItem(blob: BlobFinal, viewModel: SongsViewModel) {
 
 //Button to Go to top
 @Composable
-fun GoToTop(goToTop: () -> Unit) {
+fun GoToTop(
+    goToTop: () -> Unit,
+    paddingValues: PaddingValues
+) {
     Box(modifier = Modifier
         .fillMaxSize()
+        .padding(bottom = paddingValues.calculateBottomPadding())
     ) {
         FloatingActionButton(
             modifier = Modifier
@@ -224,6 +260,43 @@ fun GoToTop(goToTop: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.KeyboardArrowUp,
                 contentDescription = "go to top"
+            )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun DownloadAllSongs(
+    activity: ComponentActivity,
+    toDownload: List<BlobFinal>,
+    paddingValues: PaddingValues,
+    viewModel: SongsViewModel
+) {
+    val downloadQueue = ArrayDeque(toDownload)
+    Box(modifier = Modifier
+        .fillMaxSize()
+    ) {
+        FloatingActionButton(
+            modifier = Modifier
+                .padding(bottom = paddingValues.calculateBottomPadding())
+                .padding(16.dp)
+                .size(50.dp)
+                .align(Alignment.BottomCenter),
+            onClick = {
+                activity.runOnUiThread {
+                    Toast.makeText(
+                        activity,
+                        "Download Started",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                viewModel.downloadBatch(downloadQueue)
+            }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.download_all),
+                contentDescription = null
             )
         }
     }

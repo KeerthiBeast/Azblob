@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +47,9 @@ fun SyncScreen(
     activity: ComponentActivity,
     paddingValues: PaddingValues
 ) {
+    val statusMessage by viewModel.statusMessage.collectAsState()
+    val toastTrigger by viewModel.toastTrigger.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -74,6 +78,16 @@ fun SyncScreen(
             Playlist(viewModel)
             Spacer(modifier = Modifier.size(35.dp))
             SyncPlaylist(activity, viewModel)
+
+            if(toastTrigger) {
+                statusMessage.let {
+                    Toast.makeText(
+                        activity,
+                        statusMessage,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
     }
 }

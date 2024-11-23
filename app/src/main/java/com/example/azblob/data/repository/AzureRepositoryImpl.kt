@@ -13,6 +13,8 @@ import com.example.azblob.domain.model.BlobFinal
 import com.example.azblob.domain.repository.AzureRepository
 import com.example.azblob.utils.Utils
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Base64
 import java.util.Date
@@ -40,7 +42,9 @@ class AzureRepositoryImpl @Inject constructor(
             )
             if (response.isSuccessful) {
                 val responseBody = response.body()?.blobs?.blobList
-                return if (responseBody != null) localFileList(responseBody)
+                return if (responseBody != null) {
+                    withContext(Dispatchers.IO) { localFileList(responseBody) }
+                }
                 else emptyList()
             } else {
                 return emptyList()
@@ -84,20 +88,8 @@ class AzureRepositoryImpl @Inject constructor(
         return "SharedKey $accountName:$signature"
     }
 
-    private suspend fun localFileList(blobs: List<Blob>): List<BlobFinal> {
-        val fileList: Set<String> = syncFolder()
-
-        return blobs.map{blob->
-            val color = if(fileList.contains(blob.name)) Color.Green else Color.White
-            BlobFinal(
-                name = blob.name ?: "",
-                url = blob.url ?: "",
-                color = color
-            )
-        }
-    }
-
-    private suspend fun syncFolder(): Set<String> {
+    private fun localFileList(blobs: List<Blob>): List<BlobFinal> {
+        var fileList: Set<String> = emptySet()
         val context = context
 
         //Get folder URI
@@ -109,10 +101,17 @@ class AzureRepositoryImpl @Inject constructor(
         if (selectedFolderUri != null) {
             val documentFile = DocumentFile.fromTreeUri(context, selectedFolderUri)
             if(documentFile != null && documentFile.canRead()) {
-                return documentFile.listFiles().mapNotNull { it.name }.toSet()
+                fileList =  documentFile.listFiles().mapNotNull { it.name }.toSet()
             }
         }
 
-        return emptySet()
+        return blobs.map{blob->
+            val color = if(fileList.contains(blob.name)) Color.Green else Color.White
+            BlobFinal(
+                name = blob.name ?: "",
+                url = blob.url ?: "",
+                color = color
+            )
+        }
     }
 }

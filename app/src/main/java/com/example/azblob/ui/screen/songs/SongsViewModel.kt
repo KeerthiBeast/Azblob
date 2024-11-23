@@ -76,7 +76,6 @@ class SongsViewModel @Inject constructor(
         )
 
     val downloadList = searchText
-        .onStart { Log.d("Message", "Did not start the api") }
         .debounce(1000L)
         .onEach { _isSearching.update { true } }
         .combine(_toDownload) { text, blobs ->
