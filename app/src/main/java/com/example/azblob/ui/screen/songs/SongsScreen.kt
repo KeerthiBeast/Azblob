@@ -28,6 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -99,10 +100,10 @@ fun SongsScreen(
                     else Text("Songs")
                 },
                 actions = {
-                    IconButton(onClick = {
-                        if(changeScreen) changeScreen = false
-                        else changeScreen = true
-                    }) {
+                    IconToggleButton(
+                        checked = changeScreen,
+                        onCheckedChange = { changeScreen = it }
+                    ) {
                         Icon(
                             painter = painterResource(id = R.drawable.download_all),
                             contentDescription = null
@@ -155,13 +156,13 @@ fun SongsScreen(
                             Text("$downloadSize Songs to Download")
                         }
 
-                        items(toDownload) { it ->
+                        items(toDownload) {
                             BlobItem(it, viewModel)
                         }
                     }
 
                     else {
-                        items(blobs) { it ->
+                        items(blobs) {
                             BlobItem(it, viewModel)
                         }
                     }
