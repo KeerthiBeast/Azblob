@@ -47,7 +47,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAzblobRepository(api: AzblobApi): AzblobRepository = AzblobRepositoryImpl(api)
+    fun provideAzblobRepository(
+        api: AzblobApi,
+        @ApplicationContext context: Context
+    ): AzblobRepository = AzblobRepositoryImpl(api, context)
 
     @Provides
     @Singleton

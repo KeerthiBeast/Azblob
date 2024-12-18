@@ -1,5 +1,6 @@
 package com.example.azblob.data.network
 
+import com.example.azblob.data.network.dto.BucketModel
 import com.example.azblob.data.network.dto.LogModel
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -21,4 +22,7 @@ interface AzblobApi {
 
     @GET("/api")
     suspend fun getStatus(): Response<LogModel>
+
+    @GET("/bloblist")
+    suspend fun getBlobList(): Response<BucketModel>
 }
