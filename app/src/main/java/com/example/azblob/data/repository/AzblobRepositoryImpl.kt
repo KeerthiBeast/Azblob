@@ -3,6 +3,7 @@ package com.example.azblob.data.repository
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.ui.graphics.Color
 import androidx.documentfile.provider.DocumentFile
 import com.example.azblob.data.network.AzblobApi
@@ -86,10 +87,24 @@ class AzblobRepositoryImpl @Inject constructor(
                     withContext(Dispatchers.IO) { localFileList(responseBody) }
                 } else emptyList()
             } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        "Error in API: ${response.code()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
                 Log.d("Error in API", response.toString())
                 return emptyList()
             }
         } catch(e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    "Error in API: $e",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
             Log.d("Error in API", e.toString())
             return emptyList()
         }
