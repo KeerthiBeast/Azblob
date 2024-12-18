@@ -1,7 +1,5 @@
 package com.example.azblob.data.network.dto
 
-import androidx.compose.ui.graphics.Color
-import com.example.azblob.domain.model.BlobFinal
 import com.example.azblob.domain.model.Blobs
 
 data class BucketModel(

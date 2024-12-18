@@ -4,11 +4,9 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.azblob.data.network.AzblobApi
 import com.example.azblob.domain.download.Downloader
 import com.example.azblob.domain.model.BlobFinal
 import com.example.azblob.domain.repository.AzblobRepository
-import com.example.azblob.domain.repository.AzureRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
