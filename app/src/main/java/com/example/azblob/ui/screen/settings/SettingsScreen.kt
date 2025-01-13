@@ -93,8 +93,6 @@ fun SettingsScreen(
         }
     }
 
-    var link by remember { mutableStateOf("") }
-    var isEnabled by remember { mutableStateOf(false) }
     val defLink by remember {
         mutableStateOf(
             sharedPreferences.getString(defaultPlaylist, null)
