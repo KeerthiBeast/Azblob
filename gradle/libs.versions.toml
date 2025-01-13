@@ -1,6 +1,9 @@
 [versions]
 agp = "8.5.0"
 converterGson = "2.9.0"
+browser = "1.8.0"
+coilCompose = "3.0.4"
+coilNetworkOkhttp = "3.0.4"
 javapoet = "1.13.0"
 kotlin = "2.0.21"
 coreKtx = "1.13.1"
@@ -28,6 +31,9 @@ serialization = "1.6.3"
 androidxHilt = "1.2.0"
 
 [libraries]
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
+coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coilNetworkOkhttp" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-material = { module = "androidx.compose.material:material" }

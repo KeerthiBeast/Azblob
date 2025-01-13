@@ -5,9 +5,15 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.azblob.data.download.DownloaderImp
 import com.example.azblob.data.network.AzblobApi
+import com.example.azblob.data.network.SpotifyApi
+import com.example.azblob.data.network.SpotifyAuthApi
 import com.example.azblob.data.repository.AzblobRepositoryImpl
+import com.example.azblob.data.repository.SpotifyAuthRepositoryImpl
+import com.example.azblob.data.repository.SpotifyRepositoryImpl
 import com.example.azblob.domain.download.Downloader
 import com.example.azblob.domain.repository.AzblobRepository
+import com.example.azblob.domain.repository.SpotifyAuthRepository
+import com.example.azblob.domain.repository.SpotifyRepository
 import com.example.azblob.utils.Utils
 import dagger.Module
 import dagger.Provides
@@ -22,6 +28,8 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+    const val Base = "https://accounts.spotify.com/api/"
+    const val BaseApi = "https://api.spotify.com/v1/"
 
     @Provides
     @Singleton
@@ -34,10 +42,43 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideSpotifyAuthApi(): SpotifyAuthApi =
+        Retrofit.Builder()
+            .baseUrl(Base)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(SpotifyAuthApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSpotifyApi(): SpotifyApi =
+        Retrofit.Builder()
+            .baseUrl(BaseApi)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(SpotifyApi::class.java)
+
+    @Provides
+    @Singleton
     fun provideAzblobRepository(
         api: AzblobApi,
         @ApplicationContext context: Context
     ): AzblobRepository = AzblobRepositoryImpl(api, context)
+
+    @Provides
+    @Singleton
+    fun provideSpotifyAuthRepository(
+        api: SpotifyAuthApi,
+        @ApplicationContext context: Context
+    ): SpotifyAuthRepository = SpotifyAuthRepositoryImpl(api, context)
+
+    @Provides
+    @Singleton
+    fun provideSpotifyRepository(
+        api: SpotifyApi,
+        auth: SpotifyAuthRepository,
+        @ApplicationContext context: Context
+    ): SpotifyRepository = SpotifyRepositoryImpl(api, auth, context)
 
     @Provides
     @Singleton

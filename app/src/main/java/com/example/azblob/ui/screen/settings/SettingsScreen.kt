@@ -6,44 +6,50 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
-import android.widget.Toast
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.ui.draw.clip
+import coil3.compose.AsyncImage
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    viewmodel: AuthViewModel = hiltViewModel(),
     paddingValues: PaddingValues,
     context: ComponentActivity
 ) {
@@ -52,6 +58,12 @@ fun SettingsScreen(
     val folderUriKey = "folder_uri_key"
     val defaultPlaylist = "default_playlist"
     val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+    var token by remember {
+        mutableStateOf(
+            sharedPreferences.getString("token", null)
+        )
+    }
 
     // Load saved folder URI from SharedPreferences
     var selectedFolderUri by remember {
@@ -83,7 +95,7 @@ fun SettingsScreen(
 
     var link by remember { mutableStateOf("") }
     var isEnabled by remember { mutableStateOf(false) }
-    var defLink by remember {
+    val defLink by remember {
         mutableStateOf(
             sharedPreferences.getString(defaultPlaylist, null)
         )
@@ -106,6 +118,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(16.dp)
                 .padding(bottom = paddingValues.calculateBottomPadding()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -120,55 +133,84 @@ fun SettingsScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
-            //Get playlist link and save to SharedPreferences
-            OutlinedTextField(
-                value = link,
-                onValueChange = { text ->
-                    link = text
-                    if (text.isNotEmpty()) isEnabled = true
-                    else isEnabled = false
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = MaterialTheme.shapes.extraLarge,
-                label = { Text("Playlist Url") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.FavoriteBorder,
-                        contentDescription = null
-                    )
+            //Playlist selector for default playlists
+            if(token != null) {
+                val playlists by viewmodel.playlists.collectAsState()
+                var showSelector by remember {
+                    mutableStateOf(false)
                 }
-            )
-            Spacer(modifier = Modifier.size(16.dp))
-            Button(
-                enabled = isEnabled,
-                onClick = {
-                    sharedPreferences.edit().putString(defaultPlaylist, link).apply()
-                    defLink = link
-                    link = ""
-                    isEnabled = false
-                }) {
-                Text("Default Playlist")
-            }
-            Spacer(modifier = Modifier.size(16.dp))
-            Text(
-                text = defLink ?: "No default selected",
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.size(16.dp))
-            Button(
-                onClick = {
-                    if (defLink != null) {
-                        sharedPreferences.edit().remove(defaultPlaylist).apply()
-                        defLink = null
-                    } else {
-                        context.runOnUiThread {
-                            Toast.makeText(context, "No default selected", Toast.LENGTH_LONG).show()
+
+                if(playlists.isNotEmpty()) {
+                    var defPlaylist by remember {
+                        mutableStateOf(
+                            if(defLink == null) {
+                                playlists.first()
+                            } else {
+                                playlists.find { it.url == defLink }!!
+                            }
+                        )
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showSelector = true },
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            AsyncImage(
+                                model = defPlaylist.imageUrl,
+                                contentDescription = "Playlist Image",
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .height(65.dp)
+                                    .width(65.dp)
+                            )
+                            Text(
+                                text = "${defPlaylist.name}\n\nSong Count: ${defPlaylist.trackCount}",
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .weight(1f)
+                            )
                         }
                     }
+                    if(showSelector) {
+                        PlaylistSelector(
+                            context = context,
+                            update = {
+                                showSelector = false
+                                defPlaylist = playlists.find{
+                                    it.url == sharedPreferences
+                                        .getString(
+                                            defaultPlaylist,
+                                            null
+                                        )
+                                }!!
+                            },
+                            viewmodel = viewmodel
+                        )
+                    }
                 }
-            ) {
-                Text("Remove selection")
+
+                Spacer(modifier = Modifier.height(16.dp))
+                LogoutBtn(context = context){ token = null }
+            } else {
+                val scope = rememberCoroutineScope()
+                Button(
+                    onClick = {
+                        customTabRequest(context = context)
+                        scope.launch {
+                            delay(3000)
+                            token = sharedPreferences.getString("token", null)
+                            Log.d("Token", sharedPreferences.getString("token", null).toString())
+                        }
+                    }
+                ) {
+                    Text("Login")
+                }
             }
         }
     }

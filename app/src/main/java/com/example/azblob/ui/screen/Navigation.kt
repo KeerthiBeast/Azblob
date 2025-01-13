@@ -1,4 +1,4 @@
-package com.example.azblob
+package com.example.azblob.ui.screen
 
 import android.os.Build
 import androidx.activity.ComponentActivity
