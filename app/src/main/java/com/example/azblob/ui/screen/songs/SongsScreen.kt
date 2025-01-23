@@ -1,6 +1,7 @@
 package com.example.azblob.ui.screen.songs
 
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -58,6 +59,14 @@ import com.example.azblob.R
 import com.example.azblob.domain.model.BlobFinal
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,13 +166,13 @@ fun SongsScreen(
                         }
 
                         items(toDownload) {
-                            BlobItem(it, viewModel)
+                            BlobItem(it, viewModel, activity)
                         }
                     }
 
                     else {
                         items(blobs) {
-                            BlobItem(it, viewModel)
+                            BlobItem(it, viewModel, activity)
                         }
                     }
                 }
@@ -210,17 +219,58 @@ fun SongsScreen(
 /*Function to get name and download link of the song
 * Changes text color to green if song is present in the selected directory*/
 @Composable
-fun BlobItem(blob: BlobFinal, viewModel: SongsViewModel) {
+fun BlobItem(
+    blob: BlobFinal,
+    viewModel: SongsViewModel,
+    activity: ComponentActivity,
+) {
     val name = blob.name
     val fname = if(name != "Unknown Blob") {
         name.substring(0, name.length-4)
     } else {
         name
     }
+
+    //Get the cover art of the song
+    val scope = rememberCoroutineScope()
+    var cover: Bitmap? by remember {
+        mutableStateOf(null)
+    }
+    //Launch the function in IO thread to reduce main thread overhead
+   LaunchedEffect(blob.uri != null) {
+       scope.launch {
+           withContext(Dispatchers.IO) {
+               cover = extractAlbumArt(activity, blob.uri)
+           }
+       }
+   }
+
     Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
     ) {
+        if(cover != null) {
+            Image(
+                bitmap = cover!!.asImageBitmap(),
+                contentDescription = "Something",
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(50.dp)
+                    .clip(RoundedCornerShape(15))
+            )
+        }
+        else {
+            Image(
+                painter = painterResource(R.drawable.aziconart),
+                contentDescription = "Something",
+                modifier = Modifier
+                    .height(50.dp)
+                    .width(50.dp)
+                    .clip(RoundedCornerShape(15))
+            )
+        }
         Text(
             text = fname,
             modifier = Modifier

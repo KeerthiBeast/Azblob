@@ -111,29 +111,54 @@ class AzblobRepositoryImpl @Inject constructor(
     }
 
     private fun localFileList(blobs: List<Blobs>): List<BlobFinal> {
-        var fileList: Set<String> = emptySet()
-        val context = context
+        val fileList: MutableMap<String, Uri?> = mutableMapOf()
 
         //Get folder URI
         val folderUriKey = "folder_uri_key"
         val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val selectedFolderUri = sharedPreferences?.getString(folderUriKey, null)?.let { Uri.parse(it) }
 
-        //Search the folder
+        //Search the folder and get the Uri
         if (selectedFolderUri != null) {
             val documentFile = DocumentFile.fromTreeUri(context, selectedFolderUri)
             if(documentFile != null && documentFile.canRead()) {
-                fileList =  documentFile.listFiles().mapNotNull { it.name }.toSet()
+                documentFile.listFiles().mapNotNull {
+                    it.name?.let { name->
+                        fileList[name] = it.uri
+                    }
+                }
             }
         }
 
         return blobs.map{blob->
             val color = if(fileList.contains(blob.name)) Color.Green else Color.White
+            val coverArt = if(fileList.contains(blob.name)) fileList[blob.name] else null
             BlobFinal(
                 name = blob.name,
                 url = blob.url,
-                color = color
+                color = color,
+                uri = coverArt
             )
         }
     }
+
+    /*private fun extractAlbumArt(context: Context, uri: Uri?): Bitmap? {
+        if (uri == null) return null
+
+        return try {
+            val retriever = MediaMetadataRetriever()
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                retriever.setDataSource(pfd.fileDescriptor)
+            }
+            retriever.embeddedPicture?.let { bytes ->
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            } ?: run {
+                // Fallback to default art if no embedded picture
+                BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_background)
+            }
+        } catch (e: Exception) {
+            Log.e("AlbumArt", "Error extracting cover art", e)
+            BitmapFactory.decodeResource(context.resources, R.drawable.ic_launcher_background)
+        }
+    }*/
 }
