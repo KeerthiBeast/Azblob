@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,11 +21,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,6 +50,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.clip
 import coil3.compose.AsyncImage
+import androidx.core.content.edit
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,8 +63,17 @@ fun SettingsScreen(
 
     // Key for saving the folder URI in SharedPreferences
     val folderUriKey = "folder_uri_key"
+    val serverIpKey = "server_ip"
     val defaultPlaylist = "default_playlist"
     val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+    val ipSharedPref by remember {
+        mutableStateOf(
+            sharedPreferences.getString(serverIpKey, "http://0.0.0.0:6942")
+                .toString()
+        )
+    }
+    var serverIp by remember {mutableStateOf("")}
 
     var token by remember {
         mutableStateOf(
@@ -71,6 +87,8 @@ fun SettingsScreen(
             sharedPreferences.getString(folderUriKey, null)?.let { Uri.parse(it) }
         )
     }
+
+    var isEnabled by remember {mutableStateOf(false)}
 
     var selectedFolderPath by remember { mutableStateOf(selectedFolderUri?.let { getFullPathFromTreeUri(it) }) }
 
@@ -121,6 +139,36 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            OutlinedTextField(
+                value = serverIp,
+                onValueChange = { text ->
+                    serverIp = text
+                    if (text.isNotEmpty()) isEnabled = true
+                    else isEnabled = false
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = MaterialTheme.shapes.extraLarge,
+                label = { Text(ipSharedPref) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = null
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.size(16.dp))
+            Button(
+                enabled = isEnabled,
+                onClick = {
+                    sharedPreferences.edit() { putString(serverIpKey, serverIp) }
+                    serverIp = ""
+                    isEnabled = false
+                    Toast.makeText(context, "IP Changed, Restart to see changes", Toast.LENGTH_LONG).show()
+                }) {
+                Text("Change IP")
+            }
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = selectedFolderPath ?: "No folder selected",
                 style = MaterialTheme.typography.bodyLarge

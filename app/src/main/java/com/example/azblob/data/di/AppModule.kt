@@ -1,6 +1,7 @@
 package com.example.azblob.data.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.example.azblob.data.download.DownloaderImp
@@ -14,7 +15,6 @@ import com.example.azblob.domain.download.Downloader
 import com.example.azblob.domain.repository.AzblobRepository
 import com.example.azblob.domain.repository.SpotifyAuthRepository
 import com.example.azblob.domain.repository.SpotifyRepository
-import com.example.azblob.utils.Utils
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,9 +33,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAzblobApi(): AzblobApi =
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAzblobApi(sharedPreferences: SharedPreferences): AzblobApi =
         Retrofit.Builder()
-            .baseUrl(Utils.Base)
+            .baseUrl(sharedPreferences.getString("server_ip", "http://0.0.0.0:6942")!!)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(AzblobApi::class.java)
